@@ -1,3 +1,18 @@
+/*
+ * Copyright (c) 2015, 2018 The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ */
+
+#include <linux/delay.h>
 #include <linux/i2c.h>
 #include <linux/interrupt.h>
 #include <linux/miscdevice.h>
@@ -511,7 +526,17 @@ static ssize_t blink_store(struct device *dev,
 
 	aw2013_set_color(s_aw2013, color);
 
-	return count;
+static int aw_2013_check_chipid(struct aw2013_led *led)
+{
+	u8 val;
+
+	aw2013_write(led, AW_REG_RESET, AW_LED_RESET_MASK);
+	usleep_range(AW_LED_RESET_DELAY-2, AW_LED_RESET_DELAY);
+	aw2013_read(led, AW_REG_RESET, &val);
+	if (val == AW2013_CHIPID)
+		return 0;
+	else
+		return -EINVAL;
 }
 
 static DEVICE_ATTR(blink, 0664, blink_show, blink_store);
